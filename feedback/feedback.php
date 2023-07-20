@@ -4,9 +4,12 @@
 
 <?php 
 
-$sql='SELECT * FROM feedback';
+
+
+$sql='SELECT id,name, email , phone , body , date FROM feedback';
 $result= mysqli_query($conn, $sql);
 $feedback= mysqli_fetch_all($result,MYSQLI_ASSOC);
+
 
 function deleteFeedback($id,$conn){
 
@@ -25,6 +28,7 @@ if(mysqli_query($conn,$sql)){
   if(isset($_POST['delete_id'])){
   deleteFeedback($_POST['delete_id'],$conn);
 }
+
 ?>
 
 
@@ -41,6 +45,8 @@ if(mysqli_query($conn,$sql)){
     <input type="hidden" name="edit_id" value="<?php echo $item['id']; ?>">
     <input type="hidden" name="edit_name" value="<?php echo $item['name']; ?>">
     <input type="hidden" name="edit_email" value="<?php echo $item['email']; ?>">
+    <input type="hidden" name="edit_phone" value="<?php echo $item['phone']; ?>">
+
     <!-- <input type="hidden" name="body1" value="<?php 
     // echo $item['body']; ?>"> -->
       <button type="submit"  class="btn btn-primary btn-sm float-end">Edit</button>
@@ -55,5 +61,44 @@ if(mysqli_query($conn,$sql)){
 <?php endforeach; ?>
    
 
+<table id="myTable" class="display" width="100%">
+<thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Feedback</th>
+                <th>TimeStamp</th>
+
+            </tr>
+        </thead>
+
+ 
+
+</table>
+
+<script>
+
+var myvar = <?= json_encode($feedback); ?>;
+
+console.log(myvar);
+
+$(document).ready( function () {
+  new DataTable('#myTable',{
+    ajax: 'calldata.php',
+    "lengthMenu": [ 2,5,10,20,50 ],
+    columns: [
+        { data: 'id' },
+        { data: 'name' },
+        { data: 'email' },
+        { data: 'phone' },
+        { data: 'body' },
+        { data: 'date' }
+    ]
+  });
+} );
+
+</script>
 
 <?php include 'incl/footer.php' ?>

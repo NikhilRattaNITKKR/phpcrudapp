@@ -5,13 +5,14 @@
 $name='';
 $email='';
 $body='';
+$phone='';
 
 $nameErr='';
 $emailErr='';
 $bodyErr='';
 $phoneErr='';
-
-
+$fileContent='';
+$fileErr='';
 
 
 if(isset($_POST['submit'])){
@@ -27,14 +28,22 @@ if(empty($_POST['email'])){
   $emailErr='EMAIL IS REQUIRED';
 }else{
   $email=filter_input(INPUT_POST,'email',FILTER_SANITIZE_EMAIL);
+
+  if(strrpos($email,'.')<strpos($email,'@'))
+  $emailErr='Enter a valid Email';
+
 }
 
-// if(empty($_POST['phone'])){
-//   $phoneErr='Phone IS REQUIRED';
-// }else{
+if(empty($_POST['phone'])){
+  $phoneErr='Phone IS REQUIRED';
+}else{
 
-//   $name=filter_input(INPUT_POST,'phone',FILTER_SANITIZE_NUMBER_INT);
-// }
+  $phone=filter_input(INPUT_POST,'phone',FILTER_SANITIZE_NUMBER_INT);
+
+  if(!(strlen($phone)==10 && ctype_digit($phone)) ){
+$phoneErr='Phone number is not valid';
+  }
+}
 
 if(empty($_POST['body'])){
   $bodyErr='BODY IS REQUIRED';
@@ -43,16 +52,54 @@ if(empty($_POST['body'])){
   $body=filter_input(INPUT_POST,'body',FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
+if(empty($_FILES['photo']['name'])){
+  $fileErr='Photo IS REQUIRED';
+}else{
 
-if(empty($nameErr) && empty($bodyErr) && empty($emailErr)){
+  $file = $_FILES['photo'];
+
+    // Check for errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $fileErr= "Error uploading file. Error code: " . $file['error'];
+        exit;
+    }
+
+    // Validate file size (in bytes)
+    $maxFileSize = 5 * 1024 * 1024; // 5MB
+    if ($file['size'] > $maxFileSize) {
+      $fileErr= "File size exceeds the maximum limit of 5MB.";
+    }
+
+    // Validate file extension
+    $allowedExtensions = array('jpg', 'jpeg', 'png');
+    $fileName = $file['name'];
+    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+    if (!in_array($fileExtension, $allowedExtensions)) {
+        $fileErr="Invalid file extension. Only JPG, JPEG, PNG files are allowed.";
+    }
+
+
+$fileContent=file_get_contents($file["tmp_name"]);
+$fileContent = addslashes($fileContent);
+}
+
+
+if(empty($nameErr) && empty($bodyErr) && empty($emailErr) && empty($phoneErr) ){
 $sql='';
 
     if(isset($_POST['id']) && $_POST['id']!=='' ){
       $id=$_POST['id'];
-    $sql=  "UPDATE feedback SET name = '$name', email = '$email' , body='$body' WHERE id = '$id' ";
+      if($fileErr!=='')
+    $sql=  "UPDATE feedback SET name = '$name', email = '$email' , body='$body' , phone='$phone' , photo= '$fileContent' WHERE id = '$id' ";
+    else
+    $sql=  "UPDATE feedback SET name = '$name', email = '$email' , body='$body' , phone='$phone'  WHERE id = '$id' ";
   }else{
-   
-  $sql=  "INSERT INTO feedback (name,email,body) VALUES ('$name' , '$email' , '$body' )";
+    if($fileErr!=='')
+  $sql= "INSERT INTO feedback (name,email,phone, photo, body ) VALUES ('$name' , '$email' , '$phone' , '$fileContent'  , '$body' )";
+  else
+  $sql= "INSERT INTO feedback (name,email,phone,  body ) VALUES ('$name' , '$email' , '$phone' , '$body' )";
+
   }
 
   try{
@@ -69,7 +116,6 @@ $sql='';
 }
 }
 
-
 }
 
 
@@ -78,7 +124,7 @@ $sql='';
     <img src="/phpcrud/feedback/img/logo.png" class="w-25 mb-3" alt="">
     <h2>Feedback</h2>
     <p class="lead text-center"> Leave feedback for Traversy Media</p>
-    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" class="mt-4 w-75">
+    <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" class="mt-4 w-75" enctype="multipart/form-data">
       <div class="mb-3">
         <label for="name" class="form-label">Name</label> 
         <input value="<?php echo isset($_POST['edit_name']) ?  $_POST['edit_name'] : ( isset($_POST['name']) ? $_POST['name'] : NULL )  ?>" type="text" class="form-control <?php if($nameErr!=='') echo "is-invalid"  ?>" id="name" name="name" placeholder="Enter your name">
@@ -94,14 +140,24 @@ $sql='';
         <?php echo $emailErr ?>
       </div>
       </div>
-      <!-- <div class="mb-3">
+       <div class="mb-3">
         <label for="phone" class="form-label">Phone</label> 
-        <input value="<?php echo isset($_POST['edit_phone']) ?  $_POST['edit_phone'] : ( isset($_POST['phone']) ? $_POST['phone'] : NULL )  ?>" type="text" class="form-control <?php if($nameErr!=='') echo "is-invalid"  ?>" id="name" name="name" placeholder="Enter your name">
+        <input value="<?php echo isset($_POST['edit_phone']) ?  $_POST['edit_phone'] : ( isset($_POST['phone']) ? $_POST['phone'] : NULL )  ?>" type="text" class="form-control <?php if($phoneErr!=='') echo "is-invalid"  ?>" id="phone" name="phone" placeholder="Enter your 10 digit PhoneNumber">
         <div class="invalid-feedback">
         <?php 
-        //  echo $phoneErr ?>
+         echo $phoneErr ?>
       </div>
-      </div> -->
+      </div>
+
+      <div class="mb-3">
+        <label for="photo" class="form-label">Photo</label> 
+        <input accept=".jpg, .png, .jpeg"  type="file" class="form-control id="photo" name="photo" placeholder="Upload your Photo">
+        <!-- <div class="invalid-feedback"> -->
+        <?php 
+        //  echo $fileErr ?>
+      <!-- </div> -->
+      </div>
+       
       <div class="mb-3">
         <label for="body" class="form-label">Feedback</label>
         <textarea   class="form-control <?php if($bodyErr!=='') echo "is-invalid"  ?>" id="body" name="body" placeholder="Enter your feedback"></textarea>
