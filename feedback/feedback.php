@@ -10,7 +10,7 @@ $sql='SELECT id,name, email , phone , body , date FROM feedback';
 $result= mysqli_query($conn, $sql);
 $feedback= mysqli_fetch_all($result,MYSQLI_ASSOC);
 
-
+  
 function deleteFeedback($id,$conn){
 
 $sql="DELETE FROM feedback WHERE id='$id'";
