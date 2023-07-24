@@ -15,6 +15,12 @@ $fileContent='';
 $fileErr='';
 
 
+$sqlToGetEmails="SELECT email from feedback";
+
+$result= mysqli_query($conn, $sqlToGetEmails);
+$newResult= mysqli_fetch_all($result,MYSQLI_NUM);
+
+
 if(isset($_POST['submit'])){
 
 if(empty($_POST['name'])){
@@ -136,16 +142,17 @@ $sql='';
       <div class="mb-3">
         <label for="email" class="form-label">Email</label>
         <input  value="<?php echo isset($_POST['edit_email']) ?  $_POST['edit_email'] : ( isset($_POST['email']) ? $_POST['email'] : NULL )    ?>"  type="email" class="form-control <?php if($emailErr!=='') echo "is-invalid"  ?>" id="email" name="email" placeholder="Enter your email">
-        <div class="invalid-feedback">
+        <div class="invalid-feedback" id="email_div">
         <?php echo $emailErr ?>
       </div>
       </div>
        <div class="mb-3">
         <label for="phone" class="form-label">Phone</label> 
-        <input value="<?php echo isset($_POST['edit_phone']) ?  $_POST['edit_phone'] : ( isset($_POST['phone']) ? $_POST['phone'] : NULL )  ?>" type="text" class="form-control <?php if($phoneErr!=='') echo "is-invalid"  ?>" id="phone" name="phone" placeholder="Enter your 10 digit PhoneNumber">
-        <div class="invalid-feedback">
+        <input onkeypress='return event.charCode >= 48 && event.charCode <= 57' value="<?php echo isset($_POST['edit_phone']) ?  $_POST['edit_phone'] : ( isset($_POST['phone']) ? $_POST['phone'] : NULL )  ?>" type="text" class="form-control <?php if($phoneErr!=='') echo "is-invalid"  ?>" id="phone" name="phone" placeholder="Enter your 10 digit PhoneNumber">
+        <div class="invalid-feedback" id="phone_div">
         <?php 
          echo $phoneErr ?>
+         
       </div>
       </div>
 
@@ -172,5 +179,42 @@ $sql='';
     </form>
 
 
+
+    <script>
+
+
+$(document).ready( function () {
+  
+var emails= <?= json_encode($newResult) ?>;
+
+emails=emails.map((item)=>item[0]);
+
+$('#email').on ('keyup ',(e)=>{
+
+  if(emails.includes(e.target.value)){
+    
+    $('#email').addClass('is-invalid');
+    $('#email_div').html("This Email is already in use. Please chose another");
+  }else{
+    $('#email_div').html("");
+    $('#email').removeClass('is-invalid');
+  }
+})
+
+$('#phone').on ('keyup ',(e)=>{
+
+if(String(e.target.value).length !==10){
+  
+  $('#phone').addClass('is-invalid');
+  $('#phone_div').html("Phone number is Invalid");
+}else{
+  $('#phone_div').html("");
+  $('#phone').removeClass('is-invalid');
+}
+})
+
+} );
+
+</script>
 
 <?php include 'incl/footer.php' ?>
